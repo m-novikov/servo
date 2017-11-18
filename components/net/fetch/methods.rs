@@ -15,6 +15,7 @@ use hyper::header::{Header, HeaderFormat, HeaderView, Headers, Referer as Refere
 use hyper::method::Method;
 use hyper::mime::{Mime, SubLevel, TopLevel};
 use hyper::status::StatusCode;
+use ipc_channel::ipc::IpcReceiver;
 use mime_guess::guess_mime_type;
 use net_traits::{FetchTaskTarget, NetworkError, ReferrerPolicy};
 use net_traits::request::{CredentialsMode, Destination, Referrer, Request, RequestMode};
@@ -27,7 +28,7 @@ use std::fs::File;
 use std::io::Read;
 use std::mem;
 use std::str;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{Sender, Receiver};
 use subresource_integrity::is_response_integrity_valid;
 
@@ -43,8 +44,37 @@ pub struct FetchContext {
     pub user_agent: Cow<'static, str>,
     pub devtools_chan: Option<Sender<DevtoolsControlMsg>>,
     pub filemanager: FileManager,
+    pub cancellation_listener: Arc<Mutex<CancellationListener>>,
 }
 
+pub struct CancellationListener {
+    cancel_chan: Option<IpcReceiver<()>>,
+    cancelled: bool,
+}
+
+impl CancellationListener {
+    pub fn new(cancel_chan: Option<IpcReceiver<()>>) -> Self {
+        Self {
+            cancel_chan: cancel_chan,
+            cancelled: false,
+        }
+    }
+
+    pub fn cancelled(&mut self) -> bool {
+        if let Some(ref cancel_chan) = self.cancel_chan {
+            if self.cancelled {
+                true
+            } else if let Ok(_) = cancel_chan.try_recv() {
+                self.cancelled = true;
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
+}
 pub type DoneChannel = Option<(Sender<Data>, Receiver<Data>)>;
 
 /// [Fetch](https://fetch.spec.whatwg.org#concept-fetch)
