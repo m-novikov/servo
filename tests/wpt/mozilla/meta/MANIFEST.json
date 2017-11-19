@@ -33218,6 +33218,12 @@
      {}
     ]
    ],
+   "mozilla/http-cache.html": [
+    [
+     "/_mozilla/mozilla/http-cache.html",
+     {}
+    ]
+   ],
    "mozilla/iframe-unblock-onload.html": [
     [
      "/_mozilla/mozilla/iframe-unblock-onload.html",
@@ -66307,6 +66313,10 @@
   ],
   "mozilla/htmlspacechars.html": [
    "592f69ee432ba5bc7a2f2649e72e083d21393496",
+   "testharness"
+  ],
+  "mozilla/http-cache.html": [
+   "aecb468b412759a9a27edf9c47f49230e0d87cd1",
    "testharness"
   ],
   "mozilla/iframe-unblock-onload.html": [
